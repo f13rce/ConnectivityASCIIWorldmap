@@ -117,9 +117,9 @@ def draw():
         for row in worldMapTemp:
             for char in row:
                 if char == "#":
-                    sys.stdout.write(colored(char, "green"))
+                    sys.stdout.write(colored(char, "red"))
                 else:
-                    sys.stdout.write(colored(char, "blue"))
+                    sys.stdout.write(colored(char, "green"))
                     #sys.stdout.write(char)
             sys.stdout.write("\n")
             #print(colored(row, "blue"))
