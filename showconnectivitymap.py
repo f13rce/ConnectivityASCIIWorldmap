@@ -187,15 +187,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
     iface = args.iface
 
-    rr = 10
+    rr = 10.0
     if args.refreshrate:
-        if int(args.refreshrate) == 0:
+        if float(args.refreshrate) == 0:
             sys.exit("Refresh rate cannot be 0! This will cause a division by 0.")
-        rr = int(args.refreshrate)
+        rr = float(args.refreshrate)
 
-    spd = 3
+    spd = 3.0
     if args.speed:
-        spd = int(args.speed)
+        spd = float(args.speed)
 
     # Start sniffer
     sniff_thread = Thread(target=sniff_packets, args=(iface,))
