@@ -103,12 +103,21 @@ def draw():
                 toRemove.append(i)
                 continue
 
+            # Packet
             deltaLat = activePackets[i].geoTo[0] - activePackets[i].geoFrom[0]
             deltaLon = activePackets[i].geoTo[1] - activePackets[i].geoFrom[1]
             newGeoLat = activePackets[i].geoFrom[0] + (deltaLat / 100 * activePackets[i].pct)
             newGeoLon = activePackets[i].geoFrom[1] + (deltaLon / 100 * activePackets[i].pct)
             pos = geo_to_ascii((newGeoLat, newGeoLon))
             worldMapTemp[pos[0]] = replace_str_index(worldMapTemp[pos[0]], pos[1], "#")
+
+            # DST
+            pos = geo_to_ascii(activePackets[i].geoFrom)
+            worldMapTemp[pos[0]] = replace_str_index(worldMapTemp[pos[0]], pos[1], "@")
+
+            # DST
+            pos = geo_to_ascii(activePackets[i].geoTo)
+            worldMapTemp[pos[0]] = replace_str_index(worldMapTemp[pos[0]], pos[1], "@")
 
         i = len(toRemove) - 1
         while i >= 0:
@@ -120,6 +129,8 @@ def draw():
             for char in row:
                 if char == "#":
                     sys.stdout.write(colored(char, "red"))
+                elif char == "@":
+                    sys.stdout.write(colored(char, "yellow"))
                 else:
                     sys.stdout.write(colored(char, "green"))
                     #sys.stdout.write(char)
