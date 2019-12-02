@@ -44,7 +44,6 @@ class Packet:
 
 def replace_str_index(text,index=0,replacement=''):
     return "{}{}{}".format(text[:int(index)], replacement, text[int(index)+1:])
-    #return "{text[:int(index)]}{replacement}{text[int(index)+1:]}"
 
 def get_geolocation(ip):
     global ipGeos
@@ -56,7 +55,6 @@ def get_geolocation(ip):
     url = "https://ipinfo.io/{}/json".format(ip)
     os.system("rm json 2>/dev/null")
     os.system("wget {} 2>/dev/null".format(url))
-    #os.system("wget {}".format(url))
 
     file = open("json", "r")
     data = json.load(file)
@@ -67,7 +65,6 @@ def get_geolocation(ip):
     data = (float(data[0]), float(data[1]))
 
     ipGeos.append( (ip, data) )
-    #print(data)
 
     return (data[0] + paddingFix[0], data[1] + paddingFix[1])
 
@@ -76,16 +73,17 @@ def geo_to_ascii(geo):
     if worldMap == None:
         return None
 
-    #print("WMP GEO TO ASCII: {}, {}".format(len(worldMap), len(worldMap[0])))
-    #print("latRange: {} | lonRange: {} | geo: {}".format(latRange, lonRange, repr(geo)))
     lat = int(len(worldMap) - len(worldMap) / (latRange * 2) * (geo[0] + latRange))
     lon = int(len(worldMap[0]) / (lonRange * 2) * (geo[1] + lonRange))
-    #print("THEREFORE: {}, {}".format(lat, lon))
+
     return (lat, lon)
 
-def draw():
+def draw(refreshRate, packetSpeed):
     global curSize
     global worldMap
+
+    refreshTime = 1.0 / refreshRate
+
     while True:
         rows, cols = os.popen('stty size', 'r').read().split()
         rows = int(rows)
@@ -97,7 +95,7 @@ def draw():
         worldMapTemp = worldMap.copy()
         toRemove = []
         for i in range(len(activePackets)):
-            activePackets[i].pct += 7
+            activePackets[i].pct += packetSpeed
 
             if activePackets[i].pct >= 100:
                 toRemove.append(i)
@@ -124,29 +122,32 @@ def draw():
             activePackets.pop(i)
             i -= 1
 
-        os.system("clear")
+        # Prepare what to print
+        toWrite = ""
         for row in worldMapTemp:
             for char in row:
                 if char == "#":
-                    sys.stdout.write(colored(char, "red"))
+                    toWrite += colored(char, "red")
                 elif char == "@":
-                    sys.stdout.write(colored(char, "yellow"))
+                    toWrite += colored(char, "yellow")
                 else:
-                    sys.stdout.write(colored(char, "green"))
-                    #sys.stdout.write(char)
-            sys.stdout.write("\n")
-            #print(colored(row, "blue"))
-            #print(f"{BLUE}{row}{BLUE}")
-        time.sleep(0.5)
+                    toWrite += colored(char, "green")
+            toWrite += "\n"
+
+        # Clear screen and print
+        os.system("clear")
+        os.write(1, toWrite.encode())
+        sys.stdout.flush()
+
+        # Until next time!
+        time.sleep(refreshTime)
 
 def sniff_packets(iface=None):
     """
-    Sniff 80 port packets with `iface`, if None (default), then the
+    Sniff packets with `iface`, if None (default), then the
     Scapy's default interface is used
     """
     if iface:
-        # port 80 for http (generally)
-        # `process_packet` is the callback
         sniff(filter="", prn=process_packet, iface=iface, store=False)
     else:
         # sniff with default interface
@@ -157,10 +158,9 @@ def process_packet(packet):
     This function is executed whenever a packet is sniffed
     """
 
-    #print(repr(packet))
+    # Sometimes the [IP] header is not found - then we can skip it.
     try:
         ip = packet[IP].dst
-        #print(f"{GREEN} {ip}")
 
         p = Packet()
         p.src = packet[IP].src
@@ -177,42 +177,35 @@ def process_packet(packet):
     except:
         pass
 
-    #p.type = packet[IP].type
-
-    #if packet.haslayer(HTTPRequest):
-        # if this packet is an HTTP Request
-        # get the requested URL
-        #url = packet[HTTPRequest].Host.decode() + packet[HTTPRequest].Path.decode()
-        # get the requester's IP Address
-        #ip = packet[IP].src
-        # get the request method
-        #method = packet[HTTPRequest].Method.decode()
-        #print(f"\n{GREEN}[+] {ip} Requested {url} with {method}{RESET}")
-        #if show_raw and packet.haslayer(Raw) and method == "POST":
-            # if show_raw flag is enabled, has raw data, and the requested method is "POST"
-            # then show raw
-            #print(f"\n{RED}[*] Some useful Raw data: {packet[Raw].load}{RESET}")
-
 if __name__ == "__main__":
-    #global ownIP
-
     import argparse
     parser = argparse.ArgumentParser(description="HTTP Packet Sniffer, this is useful when you're a man in the middle." \
                                                  + "It is suggested that you run arp spoof before you use this script, otherwise it'll sniff your personal packets")
     parser.add_argument("-i", "--iface", help="Interface to use, default is scapy's default interface")
     parser.add_argument("--show-raw", dest="show_raw", action="store_true", help="Whether to print POST raw data, such as passwords, search queries, etc.")
 
+    parser.add_argument("-r", "--refreshrate", help="Refresh rate of the worldmap. The value is X times per second. Default = 10")
+    parser.add_argument("-s", "--speed", help="Speed of the packets traveling over this worldmap. The refresh rate alters this as well. Default = 3")
+
     # parse arguments
     args = parser.parse_args()
     iface = args.iface
     show_raw = args.show_raw
 
-    #ownIP = ni.ifaddresses('eth0')[AF_INET][0]['addr']
+    rr = 10
+    if args.refreshrate:
+        if int(args.refreshrate) == 0:
+            sys.exit("Refresh rate cannot be 0! This will cause a division by 0.")
+        rr = int(args.refreshrate)
 
+    spd = 3
+    if args.speed:
+        spd = int(args.speed)
+
+
+    # Start sniffer
     sniff_thread = Thread(target=sniff_packets, args=(iface,))
     sniff_thread.start()
 
-    #sniff_packets(iface)
-    draw()
-
-    #get_geolocation("188.166.66.37")
+    # Draw results in the meantime
+    draw(rr, spd)
