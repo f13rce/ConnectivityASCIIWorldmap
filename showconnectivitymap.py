@@ -3,6 +3,7 @@
 # Imports
 from scapy.all import *
 from scapy.layers.http import HTTPRequest # import HTTP packet
+import requests
 
 from termcolor import colored
 
@@ -48,22 +49,20 @@ def replace_str_index(text,index=0,replacement=''):
 def get_geolocation(ip):
     global ipGeos
 
+    # Check if we already have this in cache
     for entry in ipGeos:
         if entry[0] == ip:
             return (entry[1][0] + paddingFix[0], entry[1][1] + paddingFix[1])
 
+    # Fetch geo from this site
     url = "https://ipinfo.io/{}/json".format(ip)
-    os.system("rm json 2>/dev/null")
-    os.system("wget {} 2>/dev/null".format(url))
-
-    file = open("json", "r")
-    data = json.load(file)
-
-    os.system("rm json 2>/dev/null")
+    r = requests.get(url)
+    data = json.loads(r.content.decode("utf-8"))
 
     data = data["loc"].split(",")
     data = (float(data[0]), float(data[1]))
 
+    # Add to cache for next time
     ipGeos.append( (ip, data) )
 
     return (data[0] + paddingFix[0], data[1] + paddingFix[1])
@@ -135,7 +134,7 @@ def draw(refreshRate, packetSpeed):
             toWrite += "\n"
 
         # Clear screen and print
-        os.system("clear")
+        os.system('cls' if os.name == 'nt' else 'clear')
         os.write(1, toWrite.encode())
         sys.stdout.flush()
 
@@ -170,8 +169,6 @@ def process_packet(packet):
         p.pct = 0
         p.size = 1 #packet[IP].size / 100 #or something...
 
-        #print(repr(p))
-
         global activePackets
         activePackets.append(p)
     except:
@@ -179,18 +176,16 @@ def process_packet(packet):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="HTTP Packet Sniffer, this is useful when you're a man in the middle." \
-                                                 + "It is suggested that you run arp spoof before you use this script, otherwise it'll sniff your personal packets")
+    parser = argparse.ArgumentParser(description="A scalable tool to visually display network traffic in form of an ASCII world map that listens via your network interface.\n" \
+                                                 + "Please ensure that you have permissions to read out the traffic of the used network interface.")
     parser.add_argument("-i", "--iface", help="Interface to use, default is scapy's default interface")
-    parser.add_argument("--show-raw", dest="show_raw", action="store_true", help="Whether to print POST raw data, such as passwords, search queries, etc.")
 
     parser.add_argument("-r", "--refreshrate", help="Refresh rate of the worldmap. The value is X times per second. Default = 10")
-    parser.add_argument("-s", "--speed", help="Speed of the packets traveling over this worldmap. The refresh rate alters this as well. Default = 3")
+    parser.add_argument("-s", "--speed", help="Speed in percentage per refresh of the packets traveling over this worldmap. The refresh rate alters this as well. Default = 3")
 
     # parse arguments
     args = parser.parse_args()
     iface = args.iface
-    show_raw = args.show_raw
 
     rr = 10
     if args.refreshrate:
@@ -201,7 +196,6 @@ if __name__ == "__main__":
     spd = 3
     if args.speed:
         spd = int(args.speed)
-
 
     # Start sniffer
     sniff_thread = Thread(target=sniff_packets, args=(iface,))
