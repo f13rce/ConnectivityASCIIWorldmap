@@ -34,6 +34,9 @@ activePackets = []
 
 paddingFix = (-5, -13) # Geo coords, fixes the worldmap placement
 
+bogonIPs = []
+externalIP = ""
+
 class Packet:
     src = ""
     dst = ""
@@ -47,7 +50,15 @@ def replace_str_index(text,index=0,replacement=''):
     return "{}{}{}".format(text[:int(index)], replacement, text[int(index)+1:])
 
 def get_geolocation(ip):
+    global externalIP
     global ipGeos
+    global bogonIPs
+
+    # Replace internal IP with external if applicable
+    for bogonIP in bogonIPs:
+        if ip == bogonIP:
+            ip = externalIP
+            break
 
     # Check if we already have this in cache
     for entry in ipGeos:
@@ -58,6 +69,16 @@ def get_geolocation(ip):
     url = "https://ipinfo.io/{}/json".format(ip)
     r = requests.get(url)
     data = json.loads(r.content.decode("utf-8"))
+
+    # Check if this is a private IP address. If so, skip it.
+    if "bogon" in data:
+        if externalIP == "":
+            externalIP = requests.get("https://f13rce.net/ip.php").content.decode("utf-8")
+        bogonIPs.append(ip)
+        return get_geolocation(externalIP)
+
+    if not data.get("loc"):
+        return None
 
     data = data["loc"].split(",")
     data = (float(data[0]), float(data[1]))
@@ -157,6 +178,9 @@ def process_packet(packet):
     This function is executed whenever a packet is sniffed
     """
 
+    ip = packet[IP].src
+    geoFrom = get_geolocation(ip)
+
     # Sometimes the [IP] header is not found - then we can skip it.
     try:
         ip = packet[IP].dst
@@ -168,6 +192,9 @@ def process_packet(packet):
         p.geoTo = get_geolocation(p.dst)
         p.pct = 0
         p.size = 1 #packet[IP].size / 100 #or something...
+
+        if p.geoFrom == None or p.geoTo == None:
+            return
 
         global activePackets
         activePackets.append(p)
