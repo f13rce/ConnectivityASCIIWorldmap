@@ -78,6 +78,10 @@ def get_geolocation(ip):
         bogonIPs.append(ip)
         return get_geolocation(externalIP)
 
+    if "Rate limit exceeded" in data:
+        print("It appears that our rate limit has exceeded. :(")
+        return None
+
     if not data.get("loc"):
         return None
 
@@ -180,24 +184,19 @@ def process_packet(packet):
     """
 
     # Sometimes the [IP] header is not found - then we can skip it.
-    try:
-        ip = packet[IP].dst
+    p = Packet()
+    p.src = packet[IP].src
+    p.dst = packet[IP].dst
+    p.geoFrom = get_geolocation(p.src)
+    p.geoTo = get_geolocation(p.dst)
+    p.pct = 0
+    p.size = 1 #packet[IP].size / 100 #or something...
 
-        p = Packet()
-        p.src = packet[IP].src
-        p.dst = packet[IP].dst
-        p.geoFrom = get_geolocation(p.src)
-        p.geoTo = get_geolocation(p.dst)
-        p.pct = 0
-        p.size = 1 #packet[IP].size / 100 #or something...
+    if p.geoFrom == None or p.geoTo == None:
+        return
 
-        if p.geoFrom == None or p.geoTo == None:
-            return
-
-        global activePackets
-        activePackets.append(p)
-    except:
-        pass
+    global activePackets
+    activePackets.append(p)
 
 if __name__ == "__main__":
     import argparse
