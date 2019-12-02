@@ -205,7 +205,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="A scalable tool to visually display network traffic in form of an ASCII world map that listens via your network interface.\n" \
                                                  + "Please ensure that you have permissions to read out the traffic of the used network interface.")
-    parser.add_argument("-i", "--iface", help="Interface to use, default is scapy's default interface")
+    parser.add_argument("-i", "--iface", help="Specific network interface to use. Default = Every interface")
 
     parser.add_argument("-r", "--refreshrate", help="Refresh rate of the worldmap. The value is X times per second. Default = 10")
     parser.add_argument("-s", "--speed", help="Speed in percentage per refresh of the packets traveling over this worldmap. The refresh rate alters this as well. Default = 3")
