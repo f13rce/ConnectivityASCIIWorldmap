@@ -74,6 +74,7 @@ def get_geolocation(ip):
     if "bogon" in data:
         if externalIP == "":
             externalIP = requests.get("https://f13rce.net/ip.php").content.decode("utf-8")
+
         bogonIPs.append(ip)
         return get_geolocation(externalIP)
 
@@ -177,9 +178,6 @@ def process_packet(packet):
     """
     This function is executed whenever a packet is sniffed
     """
-
-    ip = packet[IP].src
-    geoFrom = get_geolocation(ip)
 
     # Sometimes the [IP] header is not found - then we can skip it.
     try:
