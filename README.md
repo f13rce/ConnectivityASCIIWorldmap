@@ -31,8 +31,9 @@ optional arguments:
                         Refresh rate of the worldmap. The value is X times per
                         second. Default = 10
   -s SPEED, --speed SPEED
-                        Speed of the packets traveling over this worldmap. The
-                        refresh rate alters this as well. Default = 3
+                        Speed in percentage per refresh of the packets
+                        traveling over this worldmap. The refresh rate alters
+                        this as well. Default = 3
 ```
 
 Make sure you have enough permissions to access the (default) network interface.
