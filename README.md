@@ -26,7 +26,8 @@ permissions to read out the traffic of the used network interface.
 optional arguments:
   -h, --help            show this help message and exit
   -i IFACE, --iface IFACE
-                        Interface to use, default is scapy's default interface
+                        Specific network interface to use. Default = Every
+                        interface
   -r REFRESHRATE, --refreshrate REFRESHRATE
                         Refresh rate of the worldmap. The value is X times per
                         second. Default = 10
