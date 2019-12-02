@@ -40,4 +40,8 @@ Make sure you have enough permissions to access the (default) network interface.
 
 # Requirements
 
-Currently, this version requires Python3 and a Linux distro (or WSL) since os.system() is called a few times. Is still room for improvement.
+Currently, this version requires Python3 and a Linux distro (or WSL) since os.system() is called to fetch the width of the terminal.
+
+# Comments
+
+In this script there's a link to https://f13rce.net/ip.php to fetch the external IP address in case you were using a local IP. You can change this to any other web page. Copy over the ip.php file that only returns the page requester's IP to your web server and change the URL in the script.
