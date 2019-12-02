@@ -31,6 +31,8 @@ curSize = (-1, -1)
 ipGeos = []
 activePackets = []
 
+paddingFix = (-5, -13) # Geo coords, fixes the worldmap placement
+
 class Packet:
     src = ""
     dst = ""
@@ -49,7 +51,7 @@ def get_geolocation(ip):
 
     for entry in ipGeos:
         if entry[0] == ip:
-            return entry[1]
+            return (entry[1][0] + paddingFix[0], entry[1][1] + paddingFix[1])
 
     url = "https://ipinfo.io/{}/json".format(ip)
     os.system("rm json 2>/dev/null")
@@ -67,7 +69,7 @@ def get_geolocation(ip):
     ipGeos.append( (ip, data) )
     #print(data)
 
-    return data
+    return (data[0] + paddingFix[0], data[1] + paddingFix[1])
 
 def geo_to_ascii(geo):
     global worldMap
