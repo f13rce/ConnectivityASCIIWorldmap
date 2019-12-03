@@ -46,3 +46,5 @@ Currently, this version requires Python3 and a Linux distro (or WSL) since os.sy
 # Comments
 
 In this script there's a link to https://f13rce.net/ip.php to fetch the external IP address in case you were using a local IP. You can change this to any other web page. Copy over the ip.php file that only returns the page requester's IP to your web server and change the URL in the script.
+
+I also would like an alternative to ipinfo.io since it has rate limits. This prevents the support for traceroutes to show packet traversel in detail.
